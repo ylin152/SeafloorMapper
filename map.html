@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Map</title>
+     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+    <style>
+        #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0
+        right: 0;
+        height: 100%;
+        width: 100%;
+        }
+
+        img.huechange {
+        filter: hue-rotate(120deg);
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+</body>
+</html>
+<script>
+    var coor = {{ coor | tojson }};
+    var data = {{ data | tojson }};
+    var sData = {{ sData | tojson }};
+
+<!--    var map = L.map('map').setView([51.505, -0.09], 13)-->
+
+    var OpenStreetMap = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom: 19,
+    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    })
+
+    var Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    maxZoom: 19
+    });
+
+    var Esri_OceanBasemap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri',
+	maxZoom: 19
+	});
+
+<!--    var coor = [51.505, -0.09];-->
+
+	var map = L.map('map', {
+    center: coor,
+    zoom: 8,
+    layers: Esri_WorldImagery
+    });
+
+    var baseMaps = {
+    "OpenStreetMap": OpenStreetMap,
+<!--    "Esri_OceanBasemap": Esri_OceanBasemap,-->
+    "Esri_WorldImagery": Esri_WorldImagery
+    };
+
+    var layerControl = L.control.layers(baseMaps).addTo(map);
+
+    for (var i = 0; i < data.length; i++) {
+            var lat = data[i].lat;
+            var lon = data[i].lon;
+            var marker = L.marker([lat, lon]).addTo(map);
+        }
+
+    if(sData!=''){
+        map.setZoom(12);
+
+        for (var i = 0; i < sData.length; i++) {
+            var lat = sData[i].lat;
+            var lon = sData[i].lon;
+            var sMarker = L.marker([lat, lon]).addTo(map);
+            sMarker._icon.classList.add("huechange");
+        }
+    }
+
+</script>
