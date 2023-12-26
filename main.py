@@ -6,7 +6,7 @@ from convert import ConvertWindow
 from create_training_data import CreateWindow
 from preprocess import PreprocessingWindow
 from map import PredictWindow
-from post_process import PostProcessWindow
+# from post_process import PostProcessWindow
 from annot import AntWindow
 from output import OutputWindow
 from HelpWindow import Ui_HelpWindow
@@ -62,10 +62,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sub_windows.append(self.predict_window)
         self.predict_window.show()
 
-    def open_postprocess_window(self):
-        self.postprocess_window = PostProcessWindow()
-        self.sub_windows.append(self.postprocess_window)
-        self.postprocess_window.show()
+    # def open_postprocess_window(self):
+    #     self.postprocess_window = PostProcessWindow()
+    #     self.sub_windows.append(self.postprocess_window)
+    #     self.postprocess_window.show()
 
     def open_annot_window(self):
         self.annot_window = AntWindow()
