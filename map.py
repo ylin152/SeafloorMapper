@@ -4,6 +4,7 @@ import subprocess
 from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
 from PredictWindow import Ui_PredictWindow
 from PyQt6.QtCore import QThread, pyqtSignal
+
 from predict import predict
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +18,7 @@ class FolderDialog(QFileDialog):
 
 
 class CommandRunner(QThread):
+    started = pyqtSignal()
     finished = pyqtSignal(str)  # Signal to notify completion
 
     def __init__(self):
@@ -24,41 +26,25 @@ class CommandRunner(QThread):
         self.path = None
         self.threshold = 0.5
         self.num_votes = 10
-        # self.args = None
+        self.subfolders = False
 
     def setCommand(self, args):
         self.path = args[0]
         self.threshold = args[1]
         self.num_votes = args[2]
+        self.subfolders = args[3]
 
     def run(self):
         try:
-            # result = subprocess.run(self.command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-            # output = result.stdout
-            #
-            # # Notify that the operation is complete
-            # self.finished.emit(output)
-
-            python_interpreter = sys.executable
-
-            predict_script = os.path.join(base_dir, 'predict.py')
-
-            print(os.path.exists(predict_script))
-
-            command = f'{python_interpreter} {predict_script} --data_root {self.path} --conf --threshold {self.threshold} --num_votes {self.num_votes}'
-
-            output = 'Start predict ' + self.path + '\n'
-            self.finished.emit(output)
-            output = ''
-            # Iterate through the list and run each script with its parameters
-            result = subprocess.run(command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-            output += result.stdout + '\n'
-
-            self.finished.emit(output + 'Executed successfully!')
-            # self.finished.emit("Executed successfully!")
+            self.started.emit()
+            predict(self.path, gpu='0', threshold=self.threshold, num_votes=self.num_votes, subfolders=self.subfolders)
+            self.finished.emit("Executed successfully!")
         except subprocess.CalledProcessError as e:
             self.finished.emit("Failed: " + e.stderr)
-
+    
+    def stop(self):
+        self.terminate()
+        self.finished.emit("Terminated")
 
 class PredictWindow(QMainWindow, Ui_PredictWindow):
     def __init__(self):
@@ -68,54 +54,35 @@ class PredictWindow(QMainWindow, Ui_PredictWindow):
         self.path = None
         self.threshold = 0.5
         self.num_votes = 10
+        self.subfolders = False
 
         self.selectPathButton.clicked.connect(self.openFolderDialog)
         self.predictButton.clicked.connect(self.runCommand)
 
-        # self.command_runner = CommandRunner()
-        # self.command_runner.finished.connect(self.showDonePopup)
+        self.command_runner = CommandRunner()
+        self.command_runner.started.connect(self.showStartPopup)
+        self.command_runner.finished.connect(self.showDonePopup)
 
     def openFolderDialog(self):
         folder_dialog = FolderDialog(self)
-        # options = QFileDialog.Options()
-        # options |= QFileDialog.Option.ShowDirsOnly
-
         directory = folder_dialog.getExistingDirectory(self, "Select Directory")
         self.folderPath.setPlainText(directory)
 
-        # if folder_dialog.exec() == QFileDialog.Accepted:
-        #     selected_folder = folder_dialog.selectedFiles()[0]
-        #     self.folderPath.setPlainText(selected_folder)
-
-    # def run_bash(self):
-    #     self.path = self.folderPath.toPlainText()
-    #     self.threshold = self.thresSpinBox.value()
-    #     self.num_votes = self.predsSpinBox.value()
-    #     res = subprocess.run(['bash'], self.script, self.path, self.threshold, self.num_votes)
-    #     if res.returncode != 0:
-    #         print('Failed')
-    #     else:
-    #         print('Successful')
-
     def runCommand(self):
-        self.showStartPopup()  # Show "start..." popup
-
-        # retrieve arguments
-        # script = os.path.join(base_dir, 'predict_script.sh')
-        self.path = self.folderPath.toPlainText()
-        self.threshold = self.thresSpinBox.value()
-        self.num_votes = self.predsSpinBox.value()
-        # args = [self.path, str(self.threshold), str(self.num_votes)]
-        # # Pass the command to the CommandRunner thread
-        # self.command_runner.setCommand(args)
-        # # Start the command runner thread
-        # self.command_runner.start()
-
-        try:
-            predict(data_root=self.path, threshold=self.threshold, num_votes=self.num_votes)
-            self.showDonePopup('Done')
-        except:
-            self.showDonePopup('Failed')
+        if self.folderPath.toPlainText() != "":
+            # retrieve arguments
+            self.path = self.folderPath.toPlainText()
+            self.threshold = self.thresSpinBox.value()
+            self.num_votes = self.predsSpinBox.value()
+            if self.subfoldersButton.isChecked():
+                self.subfolders = True
+            else:
+                self.subfolders = False
+            args = [self.path, self.threshold, self.num_votes, self.subfolders]
+            # Pass the command to the CommandRunner thread
+            self.command_runner.setCommand(args)
+            # Start the command runner thread
+            self.command_runner.start()
 
     def showStartPopup(self):
         msg_box = QMessageBox()
@@ -125,9 +92,16 @@ class PredictWindow(QMainWindow, Ui_PredictWindow):
 
     def showDonePopup(self, result):
         msg_box = QMessageBox()
-        msg_box.setWindowTitle(result)
-        msg_box.setText(result+'!')
+        msg_box.setWindowTitle("Done")
+        msg_box.setText(result)
         msg_box.exec()
+
+    def closeEvent(self, event):
+        # Terminate the CommandRunner when the main window is closed
+        if self.command_runner.isRunning():
+            self.command_runner.stop()
+            self.command_runner.wait()  # Wait for the thread to terminate
+        event.accept() # Close the window
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -94,7 +94,8 @@ class PreviewDialog(QDialog, Ui_PreviewDialog):
             'lat': self.comboBox_lat,
             'y': self.comboBox_y,
             'elev': self.comboBox_elev,
-            'label': self.comboBox_label
+            'conf': self.comboBox_conf,
+            'label': self.comboBox_label,
         }
 
         for col_name, combo_box in self.column_combos.items():
@@ -105,6 +106,7 @@ class PreviewDialog(QDialog, Ui_PreviewDialog):
             self.comboBox_lat.setCurrentIndex(5)
             self.comboBox_y.setCurrentIndex(2)
             self.comboBox_elev.setCurrentIndex(3)
+            self.comboBox_conf.setCurrentIndex(7)
             self.comboBox_label.setCurrentIndex(8)
 
         # Initialize column selections
@@ -113,6 +115,7 @@ class PreviewDialog(QDialog, Ui_PreviewDialog):
             'lat': None,
             'y': None,
             'elev': None,
+            'conf': None,
             'label': None
         }
 
@@ -154,7 +157,7 @@ class PreviewDialog(QDialog, Ui_PreviewDialog):
 
 def is_internet_available():
     try:
-        socket.create_connection(('www.google.com', 80))
+        socket.create_connection(('www.github.com', 80))
         return True
     except:
         return False
@@ -177,6 +180,7 @@ class AntWindow(QMainWindow, Ui_AntWindow):
         self.data_copy = None
         self.columns = None
         self.column_indices = {}
+        # self.type = 1
         # Canvas
         self.canvas = None
         self.figure = None
@@ -383,7 +387,12 @@ class AntWindow(QMainWindow, Ui_AntWindow):
         if event.button == 1:  # left button OR if event.button is MouseButton.LEFT
             self.origin = (event.xdata, event.ydata)
             if self.select_flag:
-                self.selection_vertices.append((event.xdata, event.ydata))
+                x_offset = 0.005 * (self.scatter_ax.get_xlim()[1] - self.scatter_ax.get_xlim()[0])
+                y_offset = 0.01 * (self.scatter_ax.get_ylim()[1] - self.scatter_ax.get_ylim()[0])
+                adjusted_vertices = (event.xdata - x_offset, event.ydata - y_offset)
+                self.selection_vertices.append(adjusted_vertices)
+
+                # self.selection_vertices.append((event.xdata, event.ydata))
             if self.zoomin_x_flag:
                 x_limits = list(self.scatter_ax.get_xlim())
                 x_dist = x_limits[1] - x_limits[0]
@@ -426,23 +435,30 @@ class AntWindow(QMainWindow, Ui_AntWindow):
     def on_mouse_move(self, event):
         if event.button == 1:
             if self.select_flag:
-                self.selection_vertices.append((event.xdata, event.ydata))
-                self.draw_selection_area()
+                x_offset = 0.005 * (self.scatter_ax.get_xlim()[1] - self.scatter_ax.get_xlim()[0])
+                y_offset = 0.01 * (self.scatter_ax.get_ylim()[1] - self.scatter_ax.get_ylim()[0])
+                adjusted_vertices = (event.xdata - x_offset, event.ydata - y_offset)
+                self.selection_vertices.append(adjusted_vertices)
+                self.draw_selection_area(event)
 
     def on_mouse_release(self, event):
         if event.button == 1:
             if self.select_flag:
-                self.selection_vertices.append((event.xdata, event.ydata))
-                self.draw_selection_area()
+                x_offset = 0.005 * (self.scatter_ax.get_xlim()[1] - self.scatter_ax.get_xlim()[0])
+                y_offset = 0.01 * (self.scatter_ax.get_ylim()[1] - self.scatter_ax.get_ylim()[0])
+                adjusted_vertices = (event.xdata - x_offset, event.ydata - y_offset)
+                self.selection_vertices.append(adjusted_vertices)
+                self.draw_selection_area(event)
                 # clear the previous selection vertices
                 self.selection_vertices = []
 
-    def draw_selection_area(self):
+    def draw_selection_area(self, event):
         # clear the previous selection polygon
         if self.selection_polygon is not None:
             self.selection_polygon.remove()
         if self.selection_plot is not None:
             self.selection_plot.remove()
+
         polygon = Polygon(self.selection_vertices, edgecolor="gray", facecolor="none", alpha=0.5)
         self.selection_polygon = self.scatter_ax.add_patch(polygon)
         self.select_points_in_area()
@@ -466,12 +482,9 @@ class AntWindow(QMainWindow, Ui_AntWindow):
                     indices = np.where((self.data[:, self.column_indices['y']] == y) & (
                             self.data[:, self.column_indices['elev']] == elev))[0]
                     self.indices_selected.extend(indices)
-            # scatter_ax = self.figure.add_subplot()
             self.selection_plot = self.scatter_ax.scatter(self.data[self.indices_selected, self.column_indices['y']],
                                                           self.data[self.indices_selected, self.column_indices['elev']],
                                                           s=1, color='indianred')
-            # print("Selected Points:", self.points_selected)
-            # print("Selected Indices:", self.indices_selected)
             self.show_selected_points_on_map()
 
     # Label manipulation
@@ -553,10 +566,32 @@ class AntWindow(QMainWindow, Ui_AntWindow):
 
         if self.column_indices['label'] != -1:
             label = self.data[mask, self.column_indices['label']].astype(int)
-            color = np.where(label == 0, 'royalblue', 'orange')
+            if self.column_indices['conf'] != -1:
+                conf = self.data[mask, self.column_indices['conf']].astype(int)
+                color = np.select([label == 1, (label == 0) & (conf == 1), (label == 0) & (conf == 2)],
+                ['orange', 'seagreen', 'royalblue'])
+            else:
+                color = np.where(label == 0, 'royalblue', 'orange')
             self.scatter_plot = self.scatter_ax.scatter(y, elev, s=1, c=color)
         else:
             self.scatter_plot = self.scatter_ax.scatter(y, elev, s=1)
+
+        # if self.column_indices['label'] != -1:
+        #     label = self.data[mask, self.column_indices['label']].astype(int)
+        #     if self.column_indices['conf'] != -1:
+        #         conf = self.data[mask, self.column_indices['conf']].astype(int)
+        #         color = np.select([label == 0, (label == 1) & (conf == 1), (label == 1) & (conf == 2)],
+        #           ['royalblue', 'olive', 'olivedrab'])
+        #     else:
+        #         color = np.where(label == 0, 'royalblue', 'olivedrab')
+        #     self.scatter_plot = self.scatter_ax.scatter(y, elev, s=1, c=color)
+        # else:
+        #     if self.column_indices['conf'] != -1:
+        #         conf = self.data[mask, self.column_indices['conf']].astype(int)
+        #         color = np.where(conf == 1, 'olive', 'olivedrab')
+        #     else:
+        #         color = 'royalblue'
+        #     self.scatter_plot = self.scatter_ax.scatter(y, elev, s=1, c=color)
 
         self.scatter_ax.set_xlim(y_min, y_max)
 
@@ -622,6 +657,15 @@ class AntWindow(QMainWindow, Ui_AntWindow):
                     df = pd.read_csv(file_path, sep=' ', header=None)
                     self.data = df.to_numpy()
                     self.data_copy = self.data.copy()
+                    # self.type = 2
+                    # self.column_indices = {
+                    #     'lon': 3,
+                    #     'lat': 4,
+                    #     'y': 1,
+                    #     'elev': 2,
+                    #     'conf': 6,
+                    #     'label': 7
+                    # }
                     # Create the preview dialog
                     preview_dialog = PreviewDialog(self.data, self)
                     # Connect the preview dialog's signal to the MainWindow's slot
@@ -638,8 +682,13 @@ class AntWindow(QMainWindow, Ui_AntWindow):
                         'lat':  df.columns.get_loc('lat') if 'lat' in df.columns else -1,
                         'y':  df.columns.get_loc('y') if 'y' in df.columns else -1,
                         'elev':  df.columns.get_loc('elev') if 'elev' in df.columns else -1,
-                        'label': df.columns.get_loc('label') if 'label' in df.columns else (df.columns.get_loc('pred') if 'pred' in df.columns else -1),
+                        'conf': df.columns.get_loc('signal_conf_ph') if 'signal_conf_ph' in df.columns else -1,
+                        'label': df.columns.get_loc('annot') if 'annot' in df.columns else (df.columns.get_loc('pred') if 'pred' in df.columns else -1),
                     }
+                    # if 'annot' in df.columns:
+                    #     self.type = 2
+                    # elif 'pred' in df.columns:
+                    #     self.type = 1
                     self.set_column_indices()
 
                 # # Create the preview dialog
@@ -784,7 +833,8 @@ class AntWindow(QMainWindow, Ui_AntWindow):
                     'lat':  df.columns.get_loc('lat') if 'lat' in df.columns else -1,
                     'y':  df.columns.get_loc('y') if 'y' in df.columns else -1,
                     'elev':  df.columns.get_loc('elev') if 'elev' in df.columns else -1,
-                    'label': df.columns.get_loc('annotation') if 'annotation' in df.columns else (df.columns.get_loc('pred') if 'pred' in df.columns else -1),
+                    'conf': df.columns.get_loc('signal_conf_ph') if 'signal_conf_ph' in df.columns else -1,
+                    'label': df.columns.get_loc('annot') if 'annot' in df.columns else (df.columns.get_loc('pred') if 'pred' in df.columns else -1),
                 }
                 self.set_column_indices()
                 
@@ -864,8 +914,9 @@ class AntWindow(QMainWindow, Ui_AntWindow):
         template = env.get_template('map.html')
         # pass data to js file
         html = template.render(coor=self.coor_mean, data=self.coor, sData=self.coor_selected)
-        self.browser.setHtml(html)
-        self.browser.show()
+        if self.browser is not None:
+            self.browser.setHtml(html)
+            self.browser.show()
 
     # Open attribution window
     def open_attr_window(self):

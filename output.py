@@ -219,7 +219,6 @@ class OutputWindow(QMainWindow, Ui_OutputWindow):
 
                     # record the beam id
                     df_all.loc[df_all.index[-len(df):], 'beam'] = beam_id
-                    # df_all.loc[length:length+len(df), 'beam'] = beam_id
             else:
                 if not df.empty:
                     # output seperate tracks to a folder

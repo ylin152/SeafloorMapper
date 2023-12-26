@@ -52,7 +52,7 @@ class Ui_ConvertWindow(object):
 
     def retranslateUi(self, ConvertWindow):
         _translate = QtCore.QCoreApplication.translate
-        ConvertWindow.setWindowTitle(_translate("ConvertWindow", "Data conversion"))
+        ConvertWindow.setWindowTitle(_translate("ConvertWindow", "File conversion"))
         self.selectPathButton.setText(_translate("ConvertWindow", "Select path"))
         self.convertButton.setText(_translate("ConvertWindow", "Convert"))
         self.splitCreateBtn.setText(_translate("ConvertWindow", "Split data for training data creation"))

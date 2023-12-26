@@ -110,13 +110,13 @@ class Ui_OutputWindow(object):
 
     def retranslateUi(self, OutputWindow):
         _translate = QtCore.QCoreApplication.translate
-        OutputWindow.setWindowTitle(_translate("OutputWindow", "Output"))
+        OutputWindow.setWindowTitle(_translate("OutputWindow", "Output Data"))
         self.inputPathBtn.setText(_translate("OutputWindow", "Select input path"))
         self.groupBox.setTitle(_translate("OutputWindow", "Setting"))
         self.pointsGroup.setTitle(_translate("OutputWindow", "Category"))
         self.allRadioBtn.setText(_translate("OutputWindow", "All points"))
         self.sfRadioBtn.setText(_translate("OutputWindow", "Seafloor points only"))
-        self.rcorrBox.setText(_translate("OutputWindow", "Refraciton Correction"))
+        self.rcorrBox.setText(_translate("OutputWindow", "Refraction Correction"))
         self.outputPathButton.setText(_translate("OutputWindow", "Set output path (optional)"))
         self.trackGroup.setTitle(_translate("OutputWindow", "Track"))
         self.sepTrackRadioBtn.setText(_translate("OutputWindow", "Separate tracks"))

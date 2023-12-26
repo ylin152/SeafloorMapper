@@ -8,17 +8,16 @@ import argparse
 import os
 from pathlib import Path
 import torch
-import datetime
+# import datetime
 import logging
 import sys
 import importlib
-from tqdm import tqdm
+# from tqdm import tqdm
 import numpy as np
 from torch.utils.data import Dataset
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = BASE_DIR
-sys.path.append(os.path.join(ROOT_DIR, 'models'))
+sys.path.append(os.path.join(BASE_DIR, 'models'))
 
 
 def to_categorical(y, num_classes):
@@ -121,7 +120,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def predict(data_root, output=True, batch_size=1, gpu='0', num_point=8192, conf=True, threshold=0.5, num_votes=3):
+def predict(data_root, output=True, batch_size=1, gpu='0', num_point=8192, conf=True, threshold=0.5, num_votes=3, subfolders=False):
     print('Start model predicting...')
 
     def log_string(str):
@@ -132,7 +131,7 @@ def predict(data_root, output=True, batch_size=1, gpu='0', num_point=8192, conf=
     os.environ["CUDA_VISIBLE_DEVICES"] = gpu
     # set device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    
     '''CREATE DIR'''
     # args = parse_args()
     # data_root = args.data_root
@@ -153,13 +152,20 @@ def predict(data_root, output=True, batch_size=1, gpu='0', num_point=8192, conf=
     log_string('data_root='+str(data_root)+',batch_size='+str(batch_size)+',num_point='+str(num_point)+',conf='+str(conf)+',threshold='+str(threshold)+',num_votes='+str(num_votes)+',output='+str(output)+'\n')
     if output:
         # create output folder for test output files
-        output_dir = log_dir.joinpath('pred_' + str(threshold))
-
-        if not os.path.exists(output_dir):
-            output_dir.mkdir()
+        if not subfolders:
+            output_dir = log_dir.joinpath('pred_' + str(threshold) + '_' + str(num_votes))
+            if not os.path.exists(output_dir):
+                output_dir.mkdir()
+        else:
+            output_sf_dir = log_dir.joinpath('pred_' + str(threshold) + '_' + str(num_votes) + '_sf')
+            output_non_dir = log_dir.joinpath('pred_' + str(threshold) + '_' + str(num_votes) + '_non')
+            if not os.path.exists(output_sf_dir):
+                output_sf_dir.mkdir()
+            if not os.path.exists(output_non_dir):
+                output_non_dir.mkdir()
 
     TEST_DATASET = PartNormalDataset(root=data_root, npoints=num_point, conf_channel=conf)
-    testDataLoader = torch.utils.data.DataLoader(TEST_DATASET, batch_size=batch_size, shuffle=False, num_workers=3)
+    testDataLoader = torch.utils.data.DataLoader(TEST_DATASET, batch_size=batch_size, shuffle=False, num_workers=0)
     log_string("The number of test data is: %d" % len(TEST_DATASET))
     num_classes = 1
     num_part = 2
@@ -178,11 +184,9 @@ def predict(data_root, output=True, batch_size=1, gpu='0', num_point=8192, conf=
     classifier.load_state_dict(model_state_dict)
 
     with torch.no_grad():
-
         classifier = classifier.eval()
-        for batch_id, (points, label, point_set_normalized_mask, pc_min, pc_max, fn) in \
-                tqdm(enumerate(testDataLoader), total=len(testDataLoader), smoothing=0.9):
-
+        for points, label, point_set_normalized_mask, pc_min, pc_max, fn in testDataLoader:
+                # tqdm(enumerate(testDataLoader), total=len(testDataLoader), smoothing=0.9):
             cur_batch_size, NUM_POINT, _ = points.size()
             points, label = points.float().to(device), label.long().to(device)
             points = points.transpose(2, 1)
@@ -224,36 +228,30 @@ def predict(data_root, output=True, batch_size=1, gpu='0', num_point=8192, conf=
                     cur_mask = point_set_normalized_mask[i, :]
                     cur_points = cur_points[cur_mask, :]
                     # create a new point cloud array
-                    output_points = np.zeros((cur_points.shape[0], 8)).astype(np.float64)
+                    output_points = np.zeros((cur_points.shape[0], 9)).astype(np.float64)
                     output_points[:, 0:3] = cur_points[:, 0:3]
                     # recover the point coordinates
                     cur_pc_min = pc_min[i, :]
                     cur_pc_max = pc_max[i, :]
                     data = np.loadtxt(fn[i]).astype(np.float64)
-                    other_data = data[:, [3, 4, 5]]
+                    other_data = data[:, [3, 4, 5, 6]]
                     output_points[:, 0:3] = pc_denormalize(output_points[:, 0:3], cur_pc_min, cur_pc_max)
                     # output coordinates and class
-                    output_points[:, 3:6] = other_data
+                    output_points[:, 3:7] = other_data
                     # output class and probability
-                    output_points[:, 6] = cur_pred_prob_mask[i]
-                    output_points[:, 7] = cur_pred_val_mask[i]
+                    output_points[:, 7] = cur_pred_prob_mask[i]
+                    output_points[:, 8] = cur_pred_val_mask[i]
+                    header = 'x,y,elev,lon,lat,class,signal_conf_ph,prob,pred'
                     output_file = os.path.splitext(os.path.basename(fn[i]))[0] + '.csv'
-                    # output_file = file_name[i]
-                    output_path = os.path.join(output_dir, output_file)
-                    header = 'x,y,elev,lon,lat,class,prob,pred'
-                    np.savetxt(output_path, output_points, delimiter=',', header=header, fmt='%.4f')
-
-    # Combine all the sub-files to the original beam files
-    # post_process_script = os.path.join(BASE_DIR, 'merge.py')
-    # data_dir = 'pred_' + str(threshold)
-    # out_dir = data_dir + '_merge'
-    # post_process_command = 'python ' + post_process_script + ' --log_dir ' + str(log_dir) + ' --data_dir ' \
-    #                        + data_dir + ' --output_dir ' + out_dir
-
-    # return_code = os.system(post_process_command)
-    # if return_code != 0:
-    #     print("Run post process script error")
-
+                    if not subfolders:
+                        output_path = os.path.join(output_dir, output_file)
+                        np.savetxt(output_path, output_points, delimiter=',', header=header)
+                    else:
+                        if np.all(output_points[:,7] == 0):
+                            output_path = os.path.join(output_non_dir, output_file)
+                        else:
+                            output_path = os.path.join(output_sf_dir, output_file)
+                        np.savetxt(output_path, output_points, delimiter=',', header=header)
 
 def main(args):
     batch_size = args.batch_size

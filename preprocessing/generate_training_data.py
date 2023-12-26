@@ -38,7 +38,7 @@ def annotate_seafloor(df, seafloor_loc_h):
         df_loc = df.loc[:, ["y", "elev"]].to_numpy().tolist()
         for i, item in enumerate(df_loc):
             if item in seafloor_loc_h:
-                df.loc[i, "annotation"] = 1
+                df.loc[i, "annot"] = 1
             # elif item in seafloor_loc_l:
             #     df.loc[i, "annotation"] = 2
 
@@ -84,10 +84,10 @@ def split_by_npoints(file_list, output_dir, mode='train', npoints=8192, overwrit
                     continue
                 df_subregion.to_csv(output_file_path, header=None, index=None, sep=' ')
             elif mode == 'train':
-                df["annotation"] = 0
+                df["annot"] = 0
                 df_subregion = df.iloc[subregion_index[i][0]:subregion_index[i][1],
                     df.columns.get_indexer(["x", "y", "elev", "lon", "lat", "class", "signal_conf_ph",
-                                            "annotation"])]
+                                            "annot"])]
                 output_filename = os.path.splitext(file_base)[0] + '_' + str(i + 1).zfill(2) + '.txt'
                 output_file_path = os.path.join(output_dir, output_filename)
                 # output file to pointnet++ input data format
@@ -95,10 +95,10 @@ def split_by_npoints(file_list, output_dir, mode='train', npoints=8192, overwrit
                     continue
                 df_subregion.to_csv(output_file_path, header=None, index=None, sep=' ')
             else:
-                df["annotation"] = 0
+                df["annot"] = 0
                 df_subregion = df.iloc[subregion_index[i][0]:subregion_index[i][1],
                     df.columns.get_indexer(["x", "y", "elev", "lon", "lat", "class", "signal_conf_ph",
-                                            "annotation"])]
+                                            "annot"])]
                 output_filename = os.path.splitext(file_base)[0] + '_' + str(i + 1).zfill(2) + '.csv'
                 output_file_path = os.path.join(output_dir, output_filename)
                 if output_file_path and not overwrite:

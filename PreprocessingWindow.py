@@ -45,6 +45,6 @@ class Ui_PreprocessingWindow(object):
 
     def retranslateUi(self, PreprocessingWindow):
         _translate = QtCore.QCoreApplication.translate
-        PreprocessingWindow.setWindowTitle(_translate("PreprocessingWindow", "Preprocessing"))
+        PreprocessingWindow.setWindowTitle(_translate("PreprocessingWindow", "Data Preprocessing"))
         self.selectPathButton.setText(_translate("PreprocessingWindow", "Select path"))
         self.preprocessButton.setText(_translate("PreprocessingWindow", "Preprocess"))

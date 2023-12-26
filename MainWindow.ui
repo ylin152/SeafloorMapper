@@ -184,7 +184,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Output Data (optional)</string>
+         <string>Data Output (optional)</string>
         </property>
        </widget>
       </item>
@@ -208,7 +208,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Output Data</string>
+         <string>Data Output</string>
         </property>
        </widget>
       </item>

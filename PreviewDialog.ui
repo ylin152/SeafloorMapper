@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>534</width>
+    <width>542</width>
     <height>406</height>
    </rect>
   </property>
@@ -55,16 +55,6 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>Label</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
@@ -78,9 +68,6 @@
      <item row="0" column="1">
       <widget class="QComboBox" name="comboBox_lon"/>
      </item>
-     <item row="1" column="3">
-      <widget class="QComboBox" name="comboBox_label"/>
-     </item>
      <item row="0" column="5">
       <widget class="QComboBox" name="comboBox_y"/>
      </item>
@@ -90,6 +77,32 @@
         <string>OK</string>
        </property>
       </widget>
+     </item>
+     <item row="1" column="4">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Label</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="5">
+      <widget class="QComboBox" name="comboBox_label"/>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Signal Confidence</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QComboBox" name="comboBox_conf"/>
      </item>
     </layout>
    </item>

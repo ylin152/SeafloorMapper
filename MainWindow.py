@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'MainWindow.ui'
+# Form implementation generated from reading ui file 'MainWindow2.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -149,8 +149,8 @@ class Ui_MainWindow(object):
         self.dataLabel.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" color:#367da5;\">Manual Seafloor Mapping</span></p></body></html>"))
         self.mapLabel.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" color:#367da5;\">Auto Seafloor Mapping</span></p></body></html>"))
         self.createButton.setText(_translate("MainWindow", "Training Data Creation (optional)"))
-        self.outputButton_2.setText(_translate("MainWindow", "Output Data (optional)"))
+        self.outputButton_2.setText(_translate("MainWindow", "Data Output (optional)"))
         self.antButton_2.setText(_translate("MainWindow", "Manual Annotation"))
-        self.outputButton.setText(_translate("MainWindow", "Output Data"))
+        self.outputButton.setText(_translate("MainWindow", "Data Output"))
         self.menuHelp.setTitle(_translate("MainWindow", "Help"))
         self.actionHelp.setText(_translate("MainWindow", "Help"))

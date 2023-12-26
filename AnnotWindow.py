@@ -258,7 +258,7 @@ class Ui_AntWindow(object):
 
     def retranslateUi(self, AntWindow):
         _translate = QtCore.QCoreApplication.translate
-        AntWindow.setWindowTitle(_translate("AntWindow", "Annotation Window"))
+        AntWindow.setWindowTitle(_translate("AntWindow", "Manual Annotation"))
         self.btn_restore.setToolTip(_translate("AntWindow", "<html><head/><body><p>Restore view</p></body></html>"))
         self.label_xaxis.setText(_translate("AntWindow", "X axis"))
         self.btn_zoominx.setToolTip(_translate("AntWindow", "Zoom in along x-axis"))
@@ -283,7 +283,7 @@ class Ui_AntWindow(object):
         self.menuFile.setTitle(_translate("AntWindow", "File"))
         self.menuInfo.setTitle(_translate("AntWindow", "Info"))
         self.actionOpenFolder.setText(_translate("AntWindow", "Open Folder"))
-        self.actionSave.setText(_translate("AntWindow", "Save File"))
+        self.actionSave.setText(_translate("AntWindow", "Export File"))
         self.actionSave_As.setText(_translate("AntWindow", "Save As..."))
         self.actionAbout.setText(_translate("AntWindow", "About"))
         self.actionwewer.setText(_translate("AntWindow", "wewer"))
