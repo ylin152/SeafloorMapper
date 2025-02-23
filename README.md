@@ -7,4 +7,4 @@ The application provides a full workflow for automatic seafloor mapping by using
 
 Please find the installer file from the latest release at https://github.com/ylin152/SeafloorMapper/releases/tag/v1.0.
 
-The code is distributed under the terms of the GNU GPLv3 license.
+The code is distributed under the terms of the GNU GPLv3 license. Please see the License.txt file for details.
